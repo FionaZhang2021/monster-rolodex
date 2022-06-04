@@ -1,52 +1,60 @@
-import { Component } from 'react';
+import { useState, useEffect } from 'react';
+//useState essentially gives us a ability to encapsulate local state in a functional component
+//side effect is some behavior that we trigger from our functions that affects something that exits outside of scope
 import CardList from './components/card-list/card-list.component';
-import logo from './logo.svg';
+import SearchBox from './components/search-box/search-box.component';
 import './App.css';
 
-class App extends Component {
-  constructor() {
-    super(); 
+console.log('render');
 
-    this.state = {
-      monsters: [],
-      searchField: ''
-    };
-  }
-    
-componentDidMount() {
-  fetch('https://jsonplaceholder.typicode.com/users')
+const App = (/*props*/) => {
+ //whenever the props change, which is the arguments inside of a funcion, the whole func gets run,
+ //similary, whenever state changes,it will also run this entire func compo again, you can't run part of it.
+  const [searchField, setSearchField] =  useState(''); //[value, setValue]                                                       
+//use array structure from useState, because useState gives us back an Array of 2 values. 
+//Allow us to assign valuables to values inside of an array. Unlike setState, inside of class component it's a object.
+//But in func components, it's individual values,we are not store entire objects. State value gonna encapsulate a singular
+//value from that state, if you have multiple values,you will need multiple useState calls.Each hook only hook 1 value.
+  const [monsters, setMonsters] = useState([]);
+  const [filteredMonsters, setFilteredMonsters] = useState(monsters); 
+
+  useEffect(() => {
+    fetch('https://jsonplaceholder.typicode.com/users')
     .then((response) => response.json())
-    .then((users) => 
-    this.setState(() => {
-      return {monsters: users}
-    })
-  );
-}
-  onSearchChange = (event) => {
-    const searchField = event.target.value.toLocaleLowerCase();  // .toLocaleLowerCase will make all capitals to lowercase
-    this.setState(() => {
-      return { searchField };
-    }); // anonymous function: that is not stored anywhere in a variable,technically speaking we never update this function,even the event value changes,but it's not funciton itself
-}  //this is going to be the callback itselt. 
+    .then((users) => setMonsters (users));
+  }, []);
+  //take 2 arguments,1st is callback func will be the code or the fact that we want to happen inside of our func,
+  //2nd is an array of dependencies,contains different dependencies, by dependencies, this will be state of value.
+  //either search field or monster in the context of this app prop values. Whenever any of value inside of this dependency array
+  //change is when I going to run this func
 
-
-  render() {
-
-    const { monsters, searchField } = this.state; 
-    const { onSearchChange } = this;
-    //perfromed 2 big optimizations, main benefit of this is more readable for us, we see these variables are being initialized
-
-    const filteredMonsters = monsters.filter((monster) => {
+  useEffect(() => {
+    const newFilteredMonsters = monsters.filter((monster) => {
       return monster.name.toLocaleLowerCase().includes(searchField);
-    });
+  });
+    setFilteredMonsters(newFilteredMonsters);      
+  }, [monsters, searchField]) ;
 
-    return (
-      <div className="App">
+const onSearchChange = (event) => {
+      const searchFieldString = event.target.value.toLocaleLowerCase();  
+//It's the string value we are getting back from our searchField. 
+      setSearchField(searchFieldString);
+};
 
-          <CardList monsters={ filteredMonsters } />
-      </div>
-    );
- }
+
+
+return (
+  <div className="App">
+  <h1 className='app-title'>Monsters Rolodex</h1>
+    <SearchBox 
+      className= 'monsters-search-box' 
+      onChange = {onSearchChange} 
+      placeholder= 'search monsters'  
+    />
+     <CardList monsters={ filteredMonsters } />
+
+  </div>
+  );
 }
 
 export default App;
